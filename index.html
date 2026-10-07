@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calculadora de Prestaciones y Comprobante de Liquidación — El Salvador</title>
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">Código de Trabajo · Ley del ISR · Ley de Renuncia Voluntaria — El Salvador</p>
+  <h1>Calculadora de prestaciones y comprobante de liquidación</h1>
+  <p class="sub">Calcula prestaciones proporcionales, recargos por jornadas especiales y deducciones de ley, y genera un comprobante en PDF listo para firma.</p>
+
+  <div class="panel">
+    <h2><span class="n">1</span>Datos informativos</h2>
+    <div class="row">
+      <div class="field"><label>Nombre del trabajador(a) (opcional)</label><input id="nombre" placeholder="Si lo dejas vacío saldrá como Anónimo" autocomplete="off"></div>
+      <div class="field"><label>DUI (opcional)</label><input id="dui" placeholder="00000000-0" inputmode="numeric" maxlength="10" autocomplete="off"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Cargo</label><input id="cargo" placeholder="Ej. Vendedor" autocomplete="off"></div>
+      <div class="field"><label>Nombre del patrono / empresa</label><input id="patrono" placeholder="Ej. Empresa S.A. de C.V." autocomplete="off"></div>
+    </div>
+  </div>
+
+  <p class="note" id="lockHint"></p>
+
+  <div class="panel" id="p2">
+    <h2><span class="n">2</span>Salario, antigüedad y causal</h2>
+    <div class="row">
+      <div class="field"><label>Salario mensual contratado (US$)</label><input type="number" id="salario" placeholder="Ej. 500.00" inputmode="decimal" min="0" step="0.01"></div>
+      <div class="field"><label>Sector (para salario mínimo)</label>
+        <select id="sector">
+          <option value="408.80" selected>Comercio, servicios, industria</option>
+          <option value="402.32">Maquila textil y confección</option>
+          <option value="305.23">Agroindustria / café / caña</option>
+          <option value="272.53">Agropecuario y otras agrícolas</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Fecha de ingreso</label><input type="date" id="ingreso"></div>
+      <div class="field"><label>Fecha de finalización</label><input type="date" id="fin"></div>
+    </div>
+    <div class="field"><label>Causal de cierre laboral (*)</label>
+      <select id="motivo">
+        <option value="" selected disabled>Seleccione la causal</option>
+        <option value="injustificado">Despido sin causa justificada (Arts. 55 y 58)</option>
+        <option value="renuncia">Renuncia voluntaria (Decreto 592)</option>
+      </select>
+    </div>
+    <div class="field" id="avisoWrap" style="display:none"><label>¿Dio aviso de renuncia por escrito? (15 días; 30 si es cargo de dirección, jefatura o trabajador especializado)</label>
+      <div class="radios"><label><input type="radio" name="aviso" value="si" checked> Sí dio aviso</label><label><input type="radio" name="aviso" value="no"> No dio aviso</label></div>
+    </div>
+  </div>
+
+  <div class="panel" id="p3">
+    <h2><span class="n">3</span>Jornadas especiales y salario pendiente</h2>
+    <div class="row">
+      <div class="field"><label>Horas extra diurnas</label><input type="number" id="hed" placeholder="0" min="0" step="0.5"></div>
+      <div class="field"><label>Horas extra nocturnas</label><input type="number" id="hen" placeholder="0" min="0" step="0.5"></div>
+    </div>
+    <div class="field" style="max-width:320px"><label>Días de salario pendientes de pago (último período)</label><input type="number" id="diasPend" placeholder="0" min="0" max="31" step="1"></div>
+    <div class="field">
+      <label for="descansoFecha">Días de descanso semanal trabajados (no pagados)<span style="font-weight:400;color:var(--ink-soft)"> — agrégalos con el calendario</span></label>
+      <input type="hidden" id="descanso" value="0">
+      <div class="dRow"><input type="date" id="descansoFecha"><button type="button" class="mini" id="descansoAdd">Agregar</button></div>
+      <div id="descansoMsg"></div>
+      <div id="descansoList" class="asueto-box" style="margin-top:8px"></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Municipio (para el asueto de fiestas patronales)</label>
+        <select id="municipio">
+          <option value="">Ninguno / no aplica</option>
+          <option value="SS">San Salvador (3 y 5 de agosto)</option>
+          <option value="SM" selected>San Miguel (21 de noviembre, Virgen de la Paz)</option>
+          <option value="otro">Otro municipio (indicar fecha)</option>
+        </select>
+      </div>
+      <div class="field" id="patronalWrap" style="display:none"><label>Día principal de las fiestas patronales de tu municipio</label><input type="date" id="fechaPatronal"></div>
+    </div>
+    <div class="field"><label>¿Trabajó días de asueto?</label>
+      <div class="radios"><label><input type="radio" name="asuetoSi" value="si"> Sí</label><label><input type="radio" name="asuetoSi" value="no" checked> No</label></div>
+    </div>
+    <div id="asuetoWrap" style="display:none">
+      <div class="field">
+        <label>Marca los asuetos que trabajó<span style="font-weight:400;color:var(--ink-soft)"> (Art. 190 C.T.)</span></label>
+        <div id="asuetoBox" class="asueto-box"></div>
+      </div>
+      <div class="field" style="max-width:320px"><label>Otros días de asueto no listados</label><input type="number" id="asuetoExtra" placeholder="0" min="0" step="1"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="p4">
+    <h2><span class="n">4</span>Vacaciones y beneficios adicionales</h2>
+    <div class="row">
+      <div class="field"><label>Período vacacional (*)</label>
+        <select id="periodo">
+          <option value="1" selected>1 PERIODO (15 días)</option>
+          <option value="2">2 PERIODOS (10 días)</option>
+          <option value="3">3 PERIODOS (7 días)</option>
+        </select>
+      </div>
+      <div class="field" id="vacPrevWrap"><label>¿Ya gozó o se le pagó la vacación del último año cumplido? (*)</label>
+        <div class="radios"><label><input type="radio" name="vacPrev" value="si" checked> Sí</label><label><input type="radio" name="vacPrev" value="no"> No</label></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><label>¿Recibió pago de aguinaldo del año anterior? (*)</label>
+        <div class="radios"><label><input type="radio" name="aguiPrev" value="si" checked> Sí</label><label><input type="radio" name="aguiPrev" value="no"> No</label></div>
+      </div>
+      <div class="field"><label>¿Ha devengado comisiones los últimos 6 meses? (*)</label>
+        <div class="radios"><label><input type="radio" name="comis" value="si"> Sí</label><label><input type="radio" name="comis" value="no" checked> No</label></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><label>¿Su contrato incluye alojamiento que no se le dará en vacaciones? (+25%)</label>
+        <div class="radios"><label><input type="radio" name="aloj" value="si"> Sí</label><label><input type="radio" name="aloj" value="no" checked> No</label></div>
+      </div>
+      <div class="field"><label>¿Su contrato incluye alimentación que no se le dará en vacaciones? (+25%)</label>
+        <div class="radios"><label><input type="radio" name="comida" value="si"> Sí</label><label><input type="radio" name="comida" value="no" checked> No</label></div>
+      </div>
+    </div>
+    <div class="field" id="comisWrap" style="display:none;max-width:360px"><label>Total de comisiones de los últimos 6 meses (US$)</label><input type="number" id="comisMonto" placeholder="Ej. 600.00" inputmode="decimal" min="0" step="0.01"></div>
+  </div>
+
+  <div class="results" id="results"></div>
+  <p class="note" id="footnote"></p>
+
+  <button id="printBtn">Generar comprobante (PDF / imprimir)</button>
+  <footer>Cálculo estimado según Arts. 58, 177, 196–198 y 402 del Código de Trabajo, la Ley Reguladora de la Prestación Económica por Renuncia Voluntaria (Decreto 592) y la tabla de retención del ISR vigente desde mayo de 2025. No sustituye asesoría del Ministerio de Trabajo ni de un contador o abogado autorizado.</footer>
+</div>
+
+<div id="printSheet"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
